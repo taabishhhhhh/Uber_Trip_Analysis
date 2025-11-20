@@ -8,27 +8,7 @@ import matplotlib.pyplot as plt
 import shap
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import sys
-import logging
 from io import StringIO
-
-# configure logger
-logger = logging.getLogger(__name__)
-
-try:
-    import joblib
-except Exception as e:
-    # log the detailed error for cloud logs
-    logger.exception("joblib import failed")
-    # show a friendly error in the Streamlit UI
-    st.error(
-        "Required package `joblib` is not available in the runtime.\n\n"
-        "Fix: ensure `joblib` is listed in requirements.txt and redeploy. "
-        "See the app logs (Manage app → Logs) for details."
-    )
-    # stop further execution to avoid confusing errors
-    st.stop()
-
 
 st.set_page_config(page_title="Uber Trip Demand Forecast", layout="centered")
 
