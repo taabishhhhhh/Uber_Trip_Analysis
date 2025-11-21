@@ -1,4 +1,3 @@
-# === Uber Trip Analysis Environment ===
 pandas==2.2.2
 numpy==1.26.4
 matplotlib==3.9.0
@@ -7,6 +6,4 @@ xgboost==2.1.0
 shap==0.45.0
 streamlit==1.38.0
 joblib==1.4.2
-
-# optional utilities (safe to include)
 python-dateutil==2.9.0.post0
