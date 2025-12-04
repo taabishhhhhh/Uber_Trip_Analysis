@@ -1,9 +1,24 @@
-pandas==2.2.2
-numpy==1.26.4
-matplotlib==3.9.0
-scikit-learn==1.5.0
-xgboost==2.1.0
-shap==0.45.0
-streamlit==1.38.0
-joblib==1.4.2
-python-dateutil==2.9.0.post0
+# Core
+streamlit
+pandas
+numpy
+joblib
+scikit-learn
+
+# plotting
+matplotlib
+
+# Explainability & ML libs (may be heavy)
+shap
+xgboost
+
+# If you used LightGBM instead of sklearn/xgboost, include:
+# lightgbm
+
+# Other helpful libs
+scipy
+pillow
+
+# Notes:
+# - shap and xgboost are heavier and sometimes require compilation; if deployment fails,
+#   remove shap/xgboost and re-deploy to confirm joblib installs. Then reintroduce one at a time.
