@@ -5,14 +5,23 @@ Place in project root (next to Data/ and models/), then run:
     streamlit run app_streamlit.py
 """
 
+import importlib
+import sys
 import os
 import warnings
 warnings.filterwarnings("ignore")
 
-import joblib
 import pandas as pd
 import numpy as np
 import streamlit as st
+
+# Debug helper to check joblib import without crashing the app at import time.
+def check_joblib():
+    try:
+        import joblib
+        return True, f"joblib present - version: {getattr(joblib, '__version__', 'unknown')}"
+    except Exception as e:
+        return False, f"joblib import failed: {type(e).__name__}: {e}"
 
 # Matplotlib - use Agg for headless safety; import with try/except
 try:
@@ -60,11 +69,34 @@ def load_history(path=DATA_PATH):
     return df
 
 def load_model(path=MODEL_PATH):
+    # Lazy import joblib; this prevents top-level ModuleNotFoundError redaction.
+    try:
+        import joblib
+    except Exception as e:
+        guidance = (
+            "Failed to import joblib at runtime. Possible causes:\n"
+            " 1) A local file named 'joblib.py' or folder 'joblib/' exists (shadowing).\n"
+            " 2) Corrupt or partial joblib installation on the runtime (check build logs).\n"
+            " 3) Permissions or python path oddities.\n\n"
+            "Local checks you can run:\n"
+            "  - git ls-files | findstr /I \"joblib\"   (Windows) OR git ls-files | grep -i joblib\n"
+            "  - python -c \"import joblib; print(joblib.__version__)\"\n\n"
+            "Fixes: ensure no local joblib.* file/folder that shadows the package; ensure requirements.txt contains joblib; then commit & redeploy.\n"
+        )
+        return None, guidance + f"\nOriginal import error: {type(e).__name__}: {e}"
+
+    # Standard model loading flow
     if not os.path.exists(path):
         return None, f"Model file not found at: {path}"
     try:
         m = joblib.load(path)
         return m, None
+    except AttributeError as ae:
+        return None, (
+            "Unpickle AttributeError — likely scikit-learn / Cython binary mismatch.\n"
+            "Pin scikit-learn in requirements.txt to the version used when the model was saved.\n"
+            f"Original error: {type(ae).__name__}: {ae}"
+        )
     except Exception as e:
         return None, f"Failed to load model: {type(e).__name__}: {e}"
 
@@ -114,7 +146,7 @@ def plot_history_prediction(history_df, target_date, predicted_trips):
     fig, ax = plt.subplots(figsize=(10, 3.8))
     ax.plot(df['date'], df['trips'], marker='o', linewidth=1.4, label='Trips')
     if predicted_trips is not None:
-        ax.scatter([pd.to_datetime(target_date)], [predicted_trips], color='tab:orange', s=80, zorder=6, label='Predicted')
+        ax.scatter([pd.to_datetime(target_date)], [predicted_trips], s=80, zorder=6, label='Predicted')
         ax.axvline(pd.to_datetime(target_date), color='gray', linestyle='--', alpha=0.6)
 
     # tidy x axis
@@ -137,6 +169,15 @@ model, model_err = load_model()
 # ------------- SIDEBAR -------------
 st.sidebar.markdown("## Controls")
 st.sidebar.write("Upload a historical CSV (optional). Required columns: date,trips,active_vehicles")
+
+# show joblib import status so we can see the real import error in the UI
+joblib_ok, joblib_msg = check_joblib()
+if joblib_ok:
+    st.sidebar.success(joblib_msg)
+else:
+    st.sidebar.error("joblib import problem — see message below and follow guidance.")
+    st.sidebar.caption(joblib_msg)
+    st.sidebar.markdown("**Tip:** If you see a local file named `joblib.py`, rename it. Files like `models/X_train.joblib` are fine.")
 
 uploaded = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 if uploaded is not None:
