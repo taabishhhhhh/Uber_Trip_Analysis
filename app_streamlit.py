@@ -172,6 +172,49 @@ st.sidebar.write("Upload a historical CSV (optional). Required columns: date,tri
 
 # show joblib import status so we can see the real import error in the UI
 joblib_ok, joblib_msg = check_joblib()
+# ====== BEGIN RUNTIME DIAGNOSTICS (temporary) ======
+import sys, importlib.util, subprocess, json
+
+# Python runtime info
+py_exec = sys.executable
+py_version = sys.version.replace("\n", " ")
+
+# sys.path (first few entries)
+sys_path = "\n".join(sys.path[:8])
+
+# is joblib importable? where is the package spec?
+joblib_spec = importlib.util.find_spec("joblib")
+joblib_location = joblib_spec.origin if joblib_spec is not None else None
+
+# attempt to run `pip show joblib` safely (non-fatal)
+pip_info = ""
+try:
+    # use same interpreter
+    out = subprocess.check_output([py_exec, "-m", "pip", "show", "joblib"], stderr=subprocess.STDOUT, text=True, timeout=10)
+    pip_info = out.strip()
+except Exception as e:
+    pip_info = f"pip show joblib failed: {type(e).__name__}: {e}"
+
+# check model file existence and filesize (if present)
+model_exists = os.path.exists(MODEL_PATH)
+model_size = None
+if model_exists:
+    try:
+        model_size = os.path.getsize(MODEL_PATH)
+    except Exception:
+        model_size = "size-check-failed"
+
+# Display diagnostics in the sidebar for rapid debugging (temporary)
+st.sidebar.markdown("### Runtime diagnostics (temporary)")
+st.sidebar.code(f"Python exec: {py_exec}\nPython ver: {py_version}\n\nsys.path (top 8):\n{sys_path}")
+st.sidebar.markdown(f"**joblib spec**: `{joblib_spec}`")
+st.sidebar.markdown(f"**joblib origin**: `{joblib_location}`")
+st.sidebar.markdown("**pip show joblib** (if present):")
+st.sidebar.text(pip_info)
+st.sidebar.markdown(f"**Model file**: `{MODEL_PATH}` — exists: **{model_exists}**, size: **{model_size}**")
+st.sidebar.markdown("---")
+# ====== END RUNTIME DIAGNOSTICS (temporary) ======
+
 if joblib_ok:
     st.sidebar.success(joblib_msg)
 else:
