@@ -1,27 +1,18 @@
 # app_streamlit.py
 """
-Enterprise Streamlit app — final polished version 
+Enterprise Streamlit app — production version
 Place in project root (next to Data/ and models/), then run:
     streamlit run app_streamlit.py
 """
 
-import importlib
-import sys
 import os
 import warnings
 warnings.filterwarnings("ignore")
 
+import importlib
 import pandas as pd
 import numpy as np
 import streamlit as st
-
-# Debug helper to check joblib import without crashing the app at import time.
-def check_joblib():
-    try:
-        import joblib
-        return True, f"joblib present - version: {getattr(joblib, '__version__', 'unknown')}"
-    except Exception as e:
-        return False, f"joblib import failed: {type(e).__name__}: {e}"
 
 # Matplotlib - use Agg for headless safety; import with try/except
 try:
@@ -69,23 +60,11 @@ def load_history(path=DATA_PATH):
     return df
 
 def load_model(path=MODEL_PATH):
-    # Lazy import joblib; this prevents top-level ModuleNotFoundError redaction.
+    # Lazy import joblib to avoid top-level import issues
     try:
         import joblib
     except Exception as e:
-        guidance = (
-            "Failed to import joblib at runtime. Possible causes:\n"
-            " 1) A local file named 'joblib.py' or folder 'joblib/' exists (shadowing).\n"
-            " 2) Corrupt or partial joblib installation on the runtime (check build logs).\n"
-            " 3) Permissions or python path oddities.\n\n"
-            "Local checks you can run:\n"
-            "  - git ls-files | findstr /I \"joblib\"   (Windows) OR git ls-files | grep -i joblib\n"
-            "  - python -c \"import joblib; print(joblib.__version__)\"\n\n"
-            "Fixes: ensure no local joblib.* file/folder that shadows the package; ensure requirements.txt contains joblib; then commit & redeploy.\n"
-        )
-        return None, guidance + f"\nOriginal import error: {type(e).__name__}: {e}"
-
-    # Standard model loading flow
+        return None, f"Failed to import joblib: {type(e).__name__}: {e}. Ensure requirements.txt contains joblib."
     if not os.path.exists(path):
         return None, f"Model file not found at: {path}"
     try:
@@ -101,7 +80,6 @@ def load_model(path=MODEL_PATH):
         return None, f"Failed to load model: {type(e).__name__}: {e}"
 
 def safe_make_features(history_df: pd.DataFrame, target_date, active_override=None):
-    """Return a 1-row DataFrame with features needed by the model."""
     df = history_df.copy().sort_values("date").reset_index(drop=True)
     df['trips'] = df['trips'].astype(float)
     df['trips_rolling_mean_3'] = df['trips'].rolling(3).mean()
@@ -134,7 +112,6 @@ def safe_make_features(history_df: pd.DataFrame, target_date, active_override=No
     return pd.DataFrame([feat])
 
 def plot_history_prediction(history_df, target_date, predicted_trips):
-    """Return matplotlib Figure - historical series + predicted point"""
     df = history_df[['date','trips']].copy().sort_values('date').reset_index(drop=True)
     if predicted_trips is not None:
         df = pd.concat([df, pd.DataFrame([{'date': pd.to_datetime(target_date), 'trips': predicted_trips}])], ignore_index=True)
@@ -149,7 +126,6 @@ def plot_history_prediction(history_df, target_date, predicted_trips):
         ax.scatter([pd.to_datetime(target_date)], [predicted_trips], s=80, zorder=6, label='Predicted')
         ax.axvline(pd.to_datetime(target_date), color='gray', linestyle='--', alpha=0.6)
 
-    # tidy x axis
     locator = mdates.AutoDateLocator(minticks=5, maxticks=10)
     formatter = mdates.ConciseDateFormatter(locator)
     ax.xaxis.set_major_locator(locator)
@@ -169,58 +145,6 @@ model, model_err = load_model()
 # ------------- SIDEBAR -------------
 st.sidebar.markdown("## Controls")
 st.sidebar.write("Upload a historical CSV (optional). Required columns: date,trips,active_vehicles")
-
-# show joblib import status so we can see the real import error in the UI
-joblib_ok, joblib_msg = check_joblib()
-# ====== BEGIN RUNTIME DIAGNOSTICS (temporary) ======
-import sys, importlib.util, subprocess, json
-
-# Python runtime info
-py_exec = sys.executable
-py_version = sys.version.replace("\n", " ")
-
-# sys.path (first few entries)
-sys_path = "\n".join(sys.path[:8])
-
-# is joblib importable? where is the package spec?
-joblib_spec = importlib.util.find_spec("joblib")
-joblib_location = joblib_spec.origin if joblib_spec is not None else None
-
-# attempt to run `pip show joblib` safely (non-fatal)
-pip_info = ""
-try:
-    # use same interpreter
-    out = subprocess.check_output([py_exec, "-m", "pip", "show", "joblib"], stderr=subprocess.STDOUT, text=True, timeout=10)
-    pip_info = out.strip()
-except Exception as e:
-    pip_info = f"pip show joblib failed: {type(e).__name__}: {e}"
-
-# check model file existence and filesize (if present)
-model_exists = os.path.exists(MODEL_PATH)
-model_size = None
-if model_exists:
-    try:
-        model_size = os.path.getsize(MODEL_PATH)
-    except Exception:
-        model_size = "size-check-failed"
-
-# Display diagnostics in the sidebar for rapid debugging (temporary)
-st.sidebar.markdown("### Runtime diagnostics (temporary)")
-st.sidebar.code(f"Python exec: {py_exec}\nPython ver: {py_version}\n\nsys.path (top 8):\n{sys_path}")
-st.sidebar.markdown(f"**joblib spec**: `{joblib_spec}`")
-st.sidebar.markdown(f"**joblib origin**: `{joblib_location}`")
-st.sidebar.markdown("**pip show joblib** (if present):")
-st.sidebar.text(pip_info)
-st.sidebar.markdown(f"**Model file**: `{MODEL_PATH}` — exists: **{model_exists}**, size: **{model_size}**")
-st.sidebar.markdown("---")
-# ====== END RUNTIME DIAGNOSTICS (temporary) ======
-
-if joblib_ok:
-    st.sidebar.success(joblib_msg)
-else:
-    st.sidebar.error("joblib import problem — see message below and follow guidance.")
-    st.sidebar.caption(joblib_msg)
-    st.sidebar.markdown("**Tip:** If you see a local file named `joblib.py`, rename it. Files like `models/X_train.joblib` are fine.")
 
 uploaded = st.sidebar.file_uploader("Upload CSV", type=["csv"])
 if uploaded is not None:
@@ -268,11 +192,9 @@ with left:
         elif model is None:
             st.error("Model not available. Save your trained model to models/best_model_gradient_boosting.pkl")
         else:
-            # create features and store in session state
             feat = safe_make_features(history_df, target_date, active_override if active_override > 0 else None)
             st.session_state['last_features'] = feat
             st.session_state['last_target'] = str(target_date)
-            # predict immediately
             try:
                 Xp = feat[MODEL_FEATURES]
                 pred_value = model.predict(Xp)[0]
@@ -286,40 +208,33 @@ with right:
     st.header("Results")
     if 'last_features' in st.session_state:
         feat_df = st.session_state['last_features']
-        # ----- Table A: numeric-only table for model features (prevents Arrow warnings) -----
         st.subheader("Model features (clean numeric table)")
         try:
-            clean_features = feat_df[MODEL_FEATURES].astype(float)  # ensure purely numeric dtype
-            st.dataframe(clean_features, use_container_width=True)
+            clean_features = feat_df[MODEL_FEATURES].astype(float)
+            st.dataframe(clean_features, width="stretch")
         except Exception:
-            # Last-resort: cast to string (always safe)
-            st.dataframe(feat_df[MODEL_FEATURES].astype(str), use_container_width=True)
+            st.dataframe(feat_df[MODEL_FEATURES].astype(str), width="stretch")
 
-        # show meta info separately (date and day)
         st.markdown("**Meta**")
         meta = feat_df[['date','day_of_week']].copy()
         meta['date'] = meta['date'].dt.strftime("%Y-%m-%d")
-        st.table(meta.T.astype(str))  # small transposed metadata - strings only
+        st.table(meta.T.astype(str))
 
-        # Prediction display
         pred = st.session_state.get('last_pred', None)
         if pred is not None:
             st.success(f"Predicted trips for **{st.session_state['last_target']}**: **{int(round(pred)):,}** trips")
         else:
             st.warning("Prediction not available (see errors).")
 
-        # Historical plot
         try:
             fig = plot_history_prediction(history_df, st.session_state['last_target'], st.session_state.get('last_pred', None))
             if fig is not None:
                 st.pyplot(fig)
             else:
-                # fallback: show last 15 rows table
                 st.table(history_df[['date','trips']].tail(15).astype(str))
         except Exception as e:
             st.warning("Plotting failed: " + str(e))
 
-        # Download one-row prediction CSV
         try:
             out = feat_df.copy()
             out['predicted_trips'] = int(round(st.session_state['last_pred'])) if st.session_state.get('last_pred') is not None else None
@@ -328,7 +243,6 @@ with right:
         except Exception as e:
             st.info("Download not available: " + str(e))
 
-        # ------------- SHAP (option C: global + local) -------------
         st.subheader("Model explainability (SHAP)")
         shap_failed = False
         try:
@@ -337,11 +251,9 @@ with right:
 
             explainer = shap.TreeExplainer(model)
 
-            # Global: recent-sample bar + beeswarm (if enough history)
             if history_df.shape[0] >= 5:
                 n = min(shap_sample_days, history_df.shape[0]-1)
                 sample_feats = []
-                # build sample features safely
                 for i in range(history_df.shape[0]-n, history_df.shape[0]):
                     part = history_df.iloc[:i+1].copy()
                     part['trips'] = part['trips'].astype(float)
@@ -366,13 +278,11 @@ with right:
                 sample_df = pd.DataFrame(sample_feats)[MODEL_FEATURES]
                 shap_vals = explainer.shap_values(sample_df)
 
-                # Global bar (matplotlib)
                 plt.figure(figsize=(6,2.6))
                 shap.summary_plot(shap_vals, sample_df, plot_type="bar", show=False)
                 st.pyplot(plt.gcf())
                 plt.clf()
 
-                # Beeswarm (if not too heavy)
                 plt.figure(figsize=(6,3.2))
                 shap.summary_plot(shap_vals, sample_df, plot_type="dot", show=False)
                 st.pyplot(plt.gcf())
@@ -380,17 +290,14 @@ with right:
             else:
                 st.info("Not enough history for global SHAP — showing local contribution instead.")
 
-            # Local explanation (force plot for the predicted row)
             try:
                 X_local = feat_df[MODEL_FEATURES]
                 shap_local = explainer.shap_values(X_local)
                 plt.figure(figsize=(6,2.6))
-                # prefer matplotlib-based force_plot fallback for notebooks; shap may raise if JS expected
                 shap.force_plot(explainer.expected_value, shap_local[0], X_local.iloc[0], matplotlib=True, show=False)
                 st.pyplot(plt.gcf())
                 plt.clf()
             except Exception as e_local:
-                # fallback: show bar summary of local contributions
                 st.warning("Local SHAP force plot failed (fallback to bar): " + str(e_local))
                 plt.figure(figsize=(6,2.6))
                 shap.summary_plot(shap_local, X_local, plot_type="bar", show=False)
