@@ -6,44 +6,47 @@ By Tabish Deshmukh
 This project builds a full enterprise-grade ML workflow to forecast daily Uber trip demand (next-day).
 The solution reflects real business scenarios: scalable preprocessing, robust model evaluation, explainability, and deployment-ready UI.
 
-Included Components
+### Included Components
+- 📊 Exploratory Data Analysis (EDA)  
+- 🧪 Feature engineering (lags, rolling windows, weekend encoding, etc.)  
+- 🛡 Model training + performance benchmarking  
+- 📐 Metrics: MAPE · RMSE · R²  
+- 🔍 Global & Local Explainability using SHAP  
+- 🖥 Interactive Streamlit dashboard  
+- 📘 Professional reports for hiring, interviews & presentations  
 
-📊 Exploratory Data Analysis (EDA)
-🧪 Feature engineering (lags, rolling windows, weekend encoding, etc.)
-🤖 Model training + performance benchmarking
-📉 Metrics: MAPE · RMSE · R²
-🔍 Global & Local Explainability using SHAP
-🖥️ Interactive Streamlit dashboard
-📘 Professional reports for hiring, interviews & presentations
+## ⭐ Key Results
 
-⭐ Key Results
-Metric	Score
-Best Model:	Gradient Boosting Regressor
-MAPE   	  : 7.139%
-RMSE	  : 1454.74
-R²	      : 0.983
-<p align="center"> <img src="images/ss3.JPG" width="600"> </p>
+**🏆 Best Model:** Gradient Boosting Regressor
+
+| Metric    | Score         |
+|-----------|---------------|
+| **MAPE**  | **7.139%**    |
+| **RMSE**  | **1454.74**   |
+| **R²**    | **0.983**     |
+
+
+<p align="center"> <img src="images/ModelExplainabilityShap.JPG" width="600"> </p>
 📂 Project Structure
 Uber_Trip_Analysis/
 │
 ├── Data/
-│   └── Uber-Jan-Feb-FOIL.csv
+│ └── Uber-Jan-Feb-FOIL.csv
 │
 ├── models/
-│   └── best_model_gradient_boosting.pkl
+│ └── best_model_gradient_boosting.pkl
 │
 ├── Reports/
-│   ├── Executive_Summary.md
-│   ├── Uber_Trip_Analysis.pdf
-│   └── Uber_Trip_Analysis_Presentation.pptx
+│ ├── Executive_Summary.md
+│ ├── Uber_Trip_Analysis.pdf
+│ └── Uber_Trip_Analysis_Presentation.pptx
 │
 ├── images/
-│   ├── ss1.JPG
-│   ├── ss2.JPG
-│   ├── ss3.JPG
-│   ├── ss4.JPG
-│   ├── ss5.JPG
-│   └── NameBrandingLogo.png
+│ ├── HistoricalTripsAndPredictedPoints.JPG
+│ ├── ModelExplainabilityShap.JPG
+│ ├── ShapValue.JPG
+│ ├── StreamlitInterface.JPG
+│ └── NameBrandingLogo.png
 │
 ├── 01_data_load_and_EDA.ipynb
 ├── 02_feature_engineering.ipynb
@@ -55,13 +58,11 @@ Uber_Trip_Analysis/
 
 🔍 Model Explainability (SHAP)
 Global SHAP Summary Plot
-<p align="center"> <img src="images/ss1.JPG"> </p>
-Local SHAP Force Plot
-<p align="center"> <img src="images/ss2.JPG"> </p>
+<p align="center"> <img src="images/ShapValue.JPG"> </p>
 📈 Historical Trips & Predicted Point
-<p align="center"> <img src="images/ss4.JPG"> </p>
+<p align="center"> <img src="images/HistoricalTripsAndPredictedPoints.JPG"> </p>
 🖥️ Streamlit Application (Production UI)
-<p align="center"> <img src="images/ss5.JPG"> </p>
+<p align="center"> <img src="images/StreamlitInterface.JPG"> </p>
 Features
 
 Upload your own CSV
@@ -104,12 +105,13 @@ Data Scientist interviews
 Portfolio showcase
 Case study presentation
 
-🧭 Future Enhancements
-Multi-day forecasting (Prophet, LSTM, TFT)
-Weather/event/traffic feature integration
-Automated ML versioning (MLflow)
-CI/CD pipeline for continuous delivery
-Monitoring + model drift detection
+## 🧭 Future Enhancements
+
+- [ ] 📈 Multi-day forecasting (Prophet, LSTM, TFT)
+- [ ] 🌦️ Add weather, event & traffic datasets
+- [ ] 🔁 Implement MLflow for tracking + versioning
+- [ ] 🚀 Build CI/CD pipeline (GitHub Actions)
+- [ ] 🔍 Add model monitoring + drift detection
 
 📬 Contact
 Tabish Deshmukh
