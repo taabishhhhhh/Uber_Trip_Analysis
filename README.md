@@ -27,34 +27,37 @@ The solution reflects real business scenarios: scalable preprocessing, robust mo
 
 
 <p align="center"> <img src="images/ModelExplainabilityShap.JPG" width="600"> </p>
-📂 Project Structure
+
+## 📁 Project Structure
+
+```
 Uber_Trip_Analysis/
 │
 ├── Data/
-│ └── Uber-Jan-Feb-FOIL.csv
+│   └── Uber-Jan-Feb-FOIL.csv
 │
 ├── models/
-│ └── best_model_gradient_boosting.pkl
+│   └── best_model_gradient_boosting.pkl
 │
 ├── Reports/
-│ ├── Executive_Summary.md
-│ ├── Uber_Trip_Analysis.pdf
-│ └── Uber_Trip_Analysis_Presentation.pptx
+│   ├── Executive_Summary.md
+│   ├── Uber_Trip_Analysis.pdf
+│   └── Uber_Trip_Analysis_Presentation.pptx
 │
 ├── images/
-│ ├── HistoricalTripsAndPredictedPoints.JPG
-│ ├── ModelExplainabilityShap.JPG
-│ ├── ShapValue.JPG
-│ ├── StreamlitInterface.JPG
-│ └── NameBrandingLogo.png
+│   ├── StreamlitInterface.JPG
+│   ├── ModelExplainabilityShap.JPG
+│   ├── ShapValue.JPG
+│   └── HistoricalTripsAndPredictedPoints.JPG
 │
+├── NameBrandingLogo.png
 ├── 01_data_load_and_EDA.ipynb
 ├── 02_feature_engineering.ipynb
 ├── 03_train_test_split.ipynb
 ├── 04_model_building.ipynb
-│
 ├── app_streamlit.py
 └── requirements.txt
+```
 
 🔍 Model Explainability (SHAP)
 Global SHAP Summary Plot
